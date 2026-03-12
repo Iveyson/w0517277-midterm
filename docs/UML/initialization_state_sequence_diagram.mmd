@@ -36,7 +36,7 @@ sequenceDiagram
 
             %% GC updates scoring and notifies UI
             GC->>Score: recordMove()
-            Score-->>GC: ack
+            Score-->>GC: return
             GC-->>Cursor: moveResult(true)
         end
     end
