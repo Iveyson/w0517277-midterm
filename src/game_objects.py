@@ -1,3 +1,8 @@
+class Cell:
+    def __init__(self):
+        self.passable = True
+        print("Cell created.")
+
 class Grid:
     def __init__(self, width, height):
         self.width = width
