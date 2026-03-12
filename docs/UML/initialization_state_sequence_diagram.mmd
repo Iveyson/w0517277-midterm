@@ -1,0 +1,39 @@
+sequenceDiagram
+    autonumber
+    actor Player
+    participant Cursor
+    participant Mouse
+    participant Grid
+    participant Score as ScoreManager
+
+    %% Player chooses a direction
+    Player->>Cursor: inputDirection(dir)
+
+    %% Cursor tells the Mouse to move
+    Cursor->>Mouse: move(dir, grid)
+
+    %% Mouse checks boundaries
+    Mouse->>Grid: inBounds(nextX, nextY)?
+    Grid-->>Mouse: true/false
+
+    alt Out of bounds
+        Mouse-->>Cursor: moveResult(false, "OOB")
+    else Inside bounds
+        %% Mouse checks if blocked
+        Mouse->>Grid: isOccupied(nextX, nextY)?
+        Grid-->>Mouse: true/false
+
+        alt Blocked
+            Mouse-->>Cursor: moveResult(false, "Blocked")
+        else Free tile
+            %% Perform move
+            Mouse->>Mouse: updatePosition(nextX, nextY)
+
+            %% Score manager logs the move
+            Mouse->>Score: recordMove()
+            Score-->>Mouse: return
+
+            %% Return success
+            Mouse-->>Cursor: moveResult(true)
+        end
+    end
