@@ -1,13 +1,24 @@
 classDiagram
     direction LR
 
+    class GameController {
+      +Grid grid
+      +Mouse mouse
+      +Cursor cursor
+      +ScoreManager scoreManager
+      +initializeGame() void
+      +requestMove(dir:Direction) bool
+      +processTurn() void
+      +checkEndConditions() void
+    }
+
     class Grid {
       +int width
       +int height
       +Cell[][] cells
       +List~Wall~ walls
       +Point mouseStart
-      +bool inBounds(x:int, y:int) bool
+      +inBounds(x:int, y:int) bool
       +isOccupied(x:int, y:int) bool
       +placeWall(w:Wall) bool
       +removeWall(w:Wall) bool
@@ -55,14 +66,14 @@ classDiagram
       +applyMouseTrappedPenalty() void
     }
 
-    %% Value types / enums (as helper types)
+    %% Utility classes
+    class Cell {
+      +bool passable
+    }
+
     class Point {
       +int x
       +int y
-    }
-
-    class Cell {
-      +bool passable
     }
 
     class Direction {
@@ -89,12 +100,20 @@ classDiagram
     }
 
     %% Relationships
+
+    %% GameController owns the subsystems
+    GameController --> Grid : manages
+    GameController --> Mouse : controls
+    GameController --> Cursor : uses
+    GameController --> ScoreManager : updates
+
+    %% System relationships
     Grid "1" o-- "many" Cell : composition
     Grid "1" o-- "0..*" Wall : composition
-    Mouse "1" --> "1" Grid : queries pathing
-    Cursor "1" --> "1" Grid : modifies placement
-    Cursor "1" --> "0..*" Wall : creates/removes
+    Mouse "1" --> "1" Grid : queries for movement
+    Cursor "1" --> "1" Grid : places walls
+    Cursor "1" --> "0..*" Wall : creates/removes walls
     ScoreManager "1" ..> Mouse : observes events
-    ScoreManager "1" ..> Cursor : observes walls/moves
-    ScoreManager "1" ..> Grid : optional for end/escape checks
-    Wall "1" --> "1" Grid : positioned on
+    ScoreManager "1" ..> Grid : optional end checks
+    ScoreManager "1" ..> Cursor : wall/move stats
+    Wall "1" --> "1" Grid : located on grid

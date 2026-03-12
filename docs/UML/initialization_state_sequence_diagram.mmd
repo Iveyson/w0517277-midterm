@@ -1,39 +1,42 @@
 sequenceDiagram
     autonumber
     actor Player
-    participant Cursor
-    participant Mouse
-    participant Grid
+    participant Cursor as Cursor/UI
+    participant GC as GameController
+    participant Mouse as Mouse
+    participant Grid as Grid
     participant Score as ScoreManager
 
-    %% Player chooses a direction
+    %% Player provides direction through UI
     Player->>Cursor: inputDirection(dir)
 
-    %% Cursor tells the Mouse to move
-    Cursor->>Mouse: move(dir, grid)
+    %% UI hands off to GameController
+    Cursor->>GC: requestMove(dir)
 
-    %% Mouse checks boundaries
+    %% GC delegates the move to the Mouse (providing grid context)
+    GC->>Mouse: move(dir, grid)
+
+    %% Mouse validates via Grid
     Mouse->>Grid: inBounds(nextX, nextY)?
     Grid-->>Mouse: true/false
 
     alt Out of bounds
-        Mouse-->>Cursor: moveResult(false, "OOB")
-    else Inside bounds
-        %% Mouse checks if blocked
+        Mouse-->>GC: moveResult(false, "OOB")
+        GC-->>Cursor: moveResult(false, "OOB")
+    else In bounds
         Mouse->>Grid: isOccupied(nextX, nextY)?
         Grid-->>Mouse: true/false
 
         alt Blocked
-            Mouse-->>Cursor: moveResult(false, "Blocked")
-        else Free tile
-            %% Perform move
+            Mouse-->>GC: moveResult(false, "Blocked")
+            GC-->>Cursor: moveResult(false, "Blocked")
+        else Free
             Mouse->>Mouse: updatePosition(nextX, nextY)
+            Mouse-->>GC: moveResult(true)
 
-            %% Score manager logs the move
-            Mouse->>Score: recordMove()
-            Score-->>Mouse: return
-
-            %% Return success
-            Mouse-->>Cursor: moveResult(true)
+            %% GC updates scoring and notifies UI
+            GC->>Score: recordMove()
+            Score-->>GC: ack
+            GC-->>Cursor: moveResult(true)
         end
     end
